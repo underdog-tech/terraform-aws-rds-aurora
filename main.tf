@@ -1,7 +1,8 @@
 data "aws_partition" "current" {}
 
 locals {
-  create = var.create && var.putin_khuylo
+  create      = var.create && var.putin_khuylo
+  create_meta = var.create_meta && var.putin_khuylo
 
   port = coalesce(var.port, (var.engine == "aurora-postgresql" || var.engine == "postgres" ? 5432 : 3306))
 
@@ -23,7 +24,7 @@ locals {
 ################################################################################
 
 resource "aws_db_subnet_group" "this" {
-  count = local.create && var.create_db_subnet_group ? 1 : 0
+  count = local.create_meta && var.create_db_subnet_group ? 1 : 0
 
   name        = local.internal_db_subnet_group_name
   description = "For Aurora cluster ${var.name}"
@@ -308,7 +309,7 @@ resource "aws_appautoscaling_policy" "this" {
 ################################################################################
 
 resource "aws_security_group" "this" {
-  count = local.create && var.create_security_group ? 1 : 0
+  count = local.create_meta && var.create_security_group ? 1 : 0
 
   name        = var.security_group_use_name_prefix ? null : local.security_group_name
   name_prefix = var.security_group_use_name_prefix ? "${local.security_group_name}-" : null
@@ -323,7 +324,7 @@ resource "aws_security_group" "this" {
 }
 
 resource "aws_security_group_rule" "this" {
-  for_each = { for k, v in var.security_group_rules : k => v if local.create && var.create_security_group }
+  for_each = { for k, v in var.security_group_rules : k => v if local.create_meta && var.create_security_group }
 
   # required
   type              = try(each.value.type, "ingress")
@@ -345,7 +346,7 @@ resource "aws_security_group_rule" "this" {
 ################################################################################
 
 resource "aws_rds_cluster_parameter_group" "this" {
-  count = local.create && var.create_db_cluster_parameter_group ? 1 : 0
+  count = local.create_meta && var.create_db_cluster_parameter_group ? 1 : 0
 
   name        = var.db_cluster_parameter_group_use_name_prefix ? null : local.cluster_parameter_group_name
   name_prefix = var.db_cluster_parameter_group_use_name_prefix ? "${local.cluster_parameter_group_name}-" : null
@@ -374,7 +375,7 @@ resource "aws_rds_cluster_parameter_group" "this" {
 ################################################################################
 
 resource "aws_db_parameter_group" "this" {
-  count = local.create && var.create_db_parameter_group ? 1 : 0
+  count = local.create_meta && var.create_db_parameter_group ? 1 : 0
 
   name        = var.db_parameter_group_use_name_prefix ? null : local.db_parameter_group_name
   name_prefix = var.db_parameter_group_use_name_prefix ? "${local.db_parameter_group_name}-" : null
@@ -404,7 +405,7 @@ resource "aws_db_parameter_group" "this" {
 
 # Log groups will not be created if using a cluster identifier prefix
 resource "aws_cloudwatch_log_group" "this" {
-  for_each = toset([for log in var.enabled_cloudwatch_logs_exports : log if local.create && var.create_cloudwatch_log_group && !var.cluster_use_name_prefix])
+  for_each = toset([for log in var.enabled_cloudwatch_logs_exports : log if local.create_meta && var.create_cloudwatch_log_group && !var.cluster_use_name_prefix])
 
   name              = "/aws/rds/cluster/${var.name}/${each.value}"
   retention_in_days = var.cloudwatch_log_group_retention_in_days

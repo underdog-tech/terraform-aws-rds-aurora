@@ -1,5 +1,11 @@
 variable "create" {
-  description = "Whether cluster should be created (affects nearly all resources)"
+  description = "Whether cluster should be created (affects cluster resources (cluster, autoscaling, iam roles and associations))"
+  type        = bool
+  default     = true
+}
+
+variable "create_meta" {
+  description = "Whether cluster meta should be created (affects non cluster resources (parameter groups, security groups, subnet groups, etc))"
   type        = bool
   default     = true
 }
